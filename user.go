@@ -57,6 +57,20 @@ func (t *User) GoOffline() {
 
 }
 
-func (t *User) SendMessage(message string) {
-	t.server.Broadcast(t, message)
+func (t *User) SendMsg(msg string) {
+	t.conn.Write([]byte(msg))
+}
+
+func (t *User) DoMessage(msg string) {
+	if msg == "who" {
+		t.server.mapLock.Lock()
+		for _, user := range t.server.OnlineMap {
+			onlineMsg := "[" + user.Addr + "]" + user.Name + ":" + "online\n"
+			t.SendMsg(onlineMsg)
+		}
+		t.server.mapLock.Unlock()
+
+	} else {
+		t.server.Broadcast(t, msg)
+	}
 }

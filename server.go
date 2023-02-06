@@ -64,7 +64,7 @@ func (t *Server) Handler(conn net.Conn) {
 			}
 
 			msg := string(buf[:n-1])
-			user.SendMessage(msg)
+			user.DoMessage(msg)
 		}
 	}()
 
