@@ -4,22 +4,24 @@ import "net"
 
 // User is a struct for user data
 type User struct {
-	Name string
-	Addr string
-	C    chan string
-	conn net.Conn
+	Name   string
+	Addr   string
+	C      chan string
+	conn   net.Conn
+	server *Server
 }
 
 // NewUser is User constructor
-func NewUser(conn net.Conn) *User {
+func NewUser(conn net.Conn, server *Server) *User {
 
 	userAddr := conn.RemoteAddr().String()
 
 	user := &User{
-		Name: userAddr,
-		Addr: userAddr,
-		C:    make(chan string),
-		conn: conn,
+		Name:   userAddr,
+		Addr:   userAddr,
+		C:      make(chan string),
+		conn:   conn,
+		server: server,
 	}
 
 	go user.ListenMessage()
@@ -33,4 +35,28 @@ func (user *User) ListenMessage() {
 		msg := <-user.C
 		user.conn.Write([]byte(msg + "\n"))
 	}
+}
+
+func (t *User) GoOnline() {
+	t.server.mapLock.Lock()
+	t.server.OnlineMap[t.Name] = t
+	t.server.mapLock.Unlock()
+
+	// Broadcast message for other users
+	t.server.Broadcast(t, "is online")
+
+}
+
+func (t *User) GoOffline() {
+	t.server.mapLock.Lock()
+	delete(t.server.OnlineMap, t.Name)
+	t.server.mapLock.Unlock()
+
+	// Broadcast message for other users
+	t.server.Broadcast(t, "is offline")
+
+}
+
+func (t *User) SendMessage(message string) {
+	t.server.Broadcast(t, message)
 }

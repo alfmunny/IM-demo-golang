@@ -2,6 +2,7 @@ package main
 
 import (
 	"fmt"
+	"io"
 	"net"
 	"sync"
 )
@@ -37,21 +38,37 @@ func (t *Server) ListenMessage() {
 
 }
 
-func (t *Server) BroadcastUser(user *User, msg string) {
+func (t *Server) Broadcast(user *User, msg string) {
 	sendMsg := "[" + user.Addr + "] " + user.Name + ": " + msg
 	t.Message <- sendMsg
 }
 
 func (t *Server) Handler(conn net.Conn) {
 	// User goes online
-	user := NewUser(conn)
+	user := NewUser(conn, t)
+	user.GoOnline()
 
-	t.mapLock.Lock()
-	t.OnlineMap[user.Name] = user
-	t.mapLock.Unlock()
+	go func() {
+		buf := make([]byte, 4096)
 
-	// Broadcast message for other users
-	t.BroadcastUser(user, "is online")
+		for {
+			n, err := conn.Read(buf)
+			if n == 0 {
+				user.GoOffline()
+				return
+			}
+
+			if err != nil && err != io.EOF {
+				fmt.Println("Conn Read err:", err)
+				return
+			}
+
+			msg := string(buf[:n-1])
+			user.SendMessage(msg)
+		}
+	}()
+
+	select {}
 }
 
 func (t *Server) Start() {
