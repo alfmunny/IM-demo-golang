@@ -79,7 +79,7 @@ func (t *Server) Handler(conn net.Conn) {
 		case <-isAlive:
 			// current user is alive
 
-		case <-time.After(time.Second * 10):
+		case <-time.After(time.Second * 300):
 			user.SendMsg("You are set offline\n")
 			close(user.C)
 			conn.Close()

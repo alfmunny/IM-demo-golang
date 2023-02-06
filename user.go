@@ -75,7 +75,6 @@ func (t *User) DoMessage(msg string) {
 	} else if len(msg) > 7 && msg[:7] == "rename|" {
 
 		newName := strings.Split(msg, "|")[1]
-
 		_, ok := t.server.OnlineMap[newName]
 		if ok {
 			t.SendMsg("Name already exists")
@@ -87,6 +86,28 @@ func (t *User) DoMessage(msg string) {
 			t.Name = newName
 			t.SendMsg("User is renamed: " + newName + "\n")
 		}
+	} else if len(msg) > 4 && msg[:3] == "to|" {
+		remoteName := strings.Split(msg, "|")[1]
+
+		if remoteName == "" {
+			t.SendMsg("Message format not correct, please use to|name|message.\n")
+			return
+		}
+
+		remoteUser, ok := t.server.OnlineMap[remoteName]
+		if !ok {
+			t.SendMsg("No such user")
+			return
+		}
+
+		content := strings.Split(msg, "|")[2]
+
+		if content == "" {
+			t.SendMsg("No message content, please seond again")
+		}
+
+		remoteUser.SendMsg(t.Name + " said to You: " + content)
+
 	} else {
 		t.server.Broadcast(t, msg)
 	}
