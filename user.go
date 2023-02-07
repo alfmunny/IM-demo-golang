@@ -104,9 +104,10 @@ func (t *User) DoMessage(msg string) {
 
 		if content == "" {
 			t.SendMsg("No message content, please seond again")
+			return
 		}
 
-		remoteUser.SendMsg(t.Name + " said to You: " + content)
+		remoteUser.SendMsg(t.Name + " said to You: " + content + "\n")
 
 	} else {
 		t.server.Broadcast(t, msg)
